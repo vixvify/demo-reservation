@@ -1,7 +1,9 @@
 FROM gcc:14-bookworm
 
 WORKDIR /app
-COPY server.c client.c Makefile ./
+
+COPY server.cpp client.cpp Makefile ./
+
 RUN make
 
 CMD ["bash"]

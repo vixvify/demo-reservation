@@ -1,13 +1,13 @@
-CC=gcc
-CFLAGS=-Wall -Wextra -O2 -pthread
+CXX = g++
+CXXFLAGS = -Wall -Wextra -std=c++17
 
 all: server client
 
-server: server.c
-	$(CC) $(CFLAGS) server.c -o server
+server: server.cpp
+	$(CXX) $(CXXFLAGS) server.cpp -o server
 
-client: client.c
-	$(CC) $(CFLAGS) client.c -o client
+client: client.cpp
+	$(CXX) $(CXXFLAGS) client.cpp -o client
 
 clean:
 	rm -f server client

@@ -1,18 +1,23 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <iostream>
+#include <cstdlib>
+#include <string>
+#include <cstring>
+
 #include <sys/ipc.h>
 #include <sys/msg.h>
 
-struct message {
+using namespace std;
+
+struct Message {
     long mtype;
     int client_id;
     char text[100];
 };
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
 
     if (argc != 2) {
-        printf("Usage: %s <client_id>\n", argv[0]);
+        cout << "Usage: " << argv[0] << " <client_id>\n";
         return 1;
     }
 
@@ -22,18 +27,23 @@ int main(int argc, char *argv[]) {
 
     int msgid = msgget(key, 0666);
 
-    struct message msg;
+    Message msg;
 
     msg.mtype = 1;
     msg.client_id = client_id;
 
-    printf("Enter message: ");
+    cout << "Enter message: ";
 
-    fgets(
+    string input;
+    getline(cin, input);
+
+    strncpy(
         msg.text,
-        sizeof(msg.text),
-        stdin
+        input.c_str(),
+        sizeof(msg.text) - 1
     );
+
+    msg.text[sizeof(msg.text) - 1] = '\0';
 
     msgsnd(
         msgid,
@@ -52,10 +62,7 @@ int main(int argc, char *argv[]) {
         0
     );
 
-    printf(
-        "Server: %s\n",
-        msg.text
-    );
+    cout << "Server: " << msg.text << '\n';
 
     return 0;
 }
