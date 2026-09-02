@@ -74,18 +74,27 @@ string processCommand(
 
     if (action == "CANCEL") {
 
+        vector<int> seatIds;
+
         int seatId;
 
-        if (!(ss >> seatId)) {
+        while (ss >> seatId) {
 
-            return
-                "Usage: CANCEL <seat_id>";
+            seatIds.push_back(
+                seatId
+            );
         }
 
-        return cancelSeat(
+        if (seatIds.empty()) {
+
+            return
+                "Usage: CANCEL <seat_id> [seat_id...]";
+        }
+
+        return cancelSeats(
             workerId,
             clientId,
-            seatId
+            seatIds
         );
     }
 
