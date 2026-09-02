@@ -18,10 +18,10 @@ std::string reserveSeats(
     const std::vector<int>& requestedSeats
 );
 
-std::string cancelSeat(
+std::string cancelSeats(
     int workerId,
     int clientId,
-    int seatId
+    const std::vector<int>& requestedSeats
 );
 
 #endif
