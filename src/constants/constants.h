@@ -5,7 +5,7 @@ namespace Constants {
 
     constexpr int SEAT_COUNT = 20;
 
-    constexpr int WORKER_COUNT = 3;
+    constexpr int DEFAULT_WORKER_COUNT = 3;
 
     constexpr long REQUEST_TYPE = 1;
     constexpr long RESPONSE_TYPE_BASE = 1000;

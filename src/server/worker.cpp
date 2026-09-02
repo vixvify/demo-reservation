@@ -11,6 +11,7 @@
 #include <sstream>
 #include <cstring>
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -45,18 +46,22 @@ string processCommand(
 
     if (action == "RESERVE") {
 
+        vector<int> seatIds;
+
         int seatId;
 
-        if (!(ss >> seatId)) {
-
-            return
-                "Usage: RESERVE <seat_id>";
+        while (ss >> seatId) {
+            seatIds.push_back(seatId);
         }
 
-        return reserveSeat(
+        if (seatIds.empty()) {
+            return "Usage: RESERVE <seat_id> [seat_id...]";
+        }
+
+        return reserveSeats(
             workerId,
             clientId,
-            seatId
+            seatIds
         );
     }
 

@@ -6,4 +6,4 @@ COPY server.cpp client.cpp Makefile ./
 
 RUN make
 
-CMD ["bash"]
+CMD ["sleep", "infinity"]

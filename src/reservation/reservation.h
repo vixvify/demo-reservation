@@ -2,6 +2,7 @@
 #define RESERVATION_H
 
 #include <string>
+#include <vector>
 
 void setSynchronization(bool enabled);
 
@@ -11,10 +12,10 @@ std::string getSeatStatus(
     int seatId
 );
 
-std::string reserveSeat(
+std::string reserveSeats(
     int workerId,
     int clientId,
-    int seatId
+    const std::vector<int>& seatIds
 );
 
 std::string cancelSeat(
