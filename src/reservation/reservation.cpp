@@ -259,6 +259,23 @@ string reserveSeats(
         );
     }
 
+    for (int seatId : seatIds) {
+
+        int index = seatId - 1;
+
+        if (
+            seats[index]
+            != Constants::AVAILABLE
+        ) {
+
+            return
+                "FAILED: Transaction cancelled because Seat "
+                + to_string(seatId)
+                + " is already reserved";
+        }
+    }
+
+
     stringstream result;
 
     for (int seatId : seatIds) {
@@ -437,6 +454,22 @@ string cancelSeats(
             + to_string(seatId)
         );
     }
+
+    for (int seatId : seatIds) {
+
+    int index = seatId - 1;
+
+    if (
+        seats[index]
+        != clientId
+    ) {
+
+        return
+            "FAILED: Transaction cancelled because Seat "
+            + to_string(seatId)
+            + " cannot be cancelled";
+    }
+}
 
     stringstream result;
 
