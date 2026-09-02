@@ -4,9 +4,9 @@
 #include "../utils/delay.h"
 #include "../utils/logger.h"
 
-#include <sstream>
-#include <mutex>
 #include <algorithm>
+#include <mutex>
+#include <sstream>
 #include <vector>
 
 using namespace std;
@@ -18,6 +18,7 @@ mutex seatMutexes[Constants::SEAT_COUNT];
 bool synchronizationEnabled = true;
 
 void setSynchronization(bool enabled) {
+
     synchronizationEnabled = enabled;
 }
 
@@ -29,9 +30,26 @@ bool isValidSeat(int seatId) {
 
 string listSeats() {
 
+    vector<unique_lock<mutex>> locks;
+
+    if (synchronizationEnabled) {
+
+        for (
+            int i = 0;
+            i < Constants::SEAT_COUNT;
+            i++
+        ) {
+
+            locks.emplace_back(
+                seatMutexes[i]
+            );
+        }
+    }
+
     stringstream result;
 
-    result << "\n===== Airplane Seat Map =====\n";
+    result
+        << "\n===== Airplane Seat Map =====\n";
 
     for (
         int i = 0;
@@ -46,7 +64,10 @@ string listSeats() {
             << seatNumber
             << " : ";
 
-        if (seats[i] == Constants::AVAILABLE) {
+        if (
+            seats[i]
+            == Constants::AVAILABLE
+        ) {
 
             result << "AVAILABLE";
 
@@ -60,7 +81,8 @@ string listSeats() {
         result << "\n";
     }
 
-    result << "=============================\n";
+    result
+        << "=============================\n";
 
     return result.str();
 }
@@ -68,12 +90,41 @@ string listSeats() {
 string getSeatStatus(int seatId) {
 
     if (!isValidSeat(seatId)) {
-        return "ERROR: Invalid seat number";
+
+        return
+            "ERROR: Invalid seat number";
     }
 
     int index = seatId - 1;
 
-    if (seats[index] == Constants::AVAILABLE) {
+    if (synchronizationEnabled) {
+
+        lock_guard<mutex> lock(
+            seatMutexes[index]
+        );
+
+        if (
+            seats[index]
+            == Constants::AVAILABLE
+        ) {
+
+            return
+                "Seat "
+                + to_string(seatId)
+                + " is AVAILABLE";
+        }
+
+        return
+            "Seat "
+            + to_string(seatId)
+            + " is RESERVED by Client-"
+            + to_string(seats[index]);
+    }
+
+    if (
+        seats[index]
+        == Constants::AVAILABLE
+    ) {
 
         return
             "Seat "
@@ -88,153 +139,41 @@ string getSeatStatus(int seatId) {
         + to_string(seats[index]);
 }
 
-string reserveWithoutSync(
-    int workerId,
-    int clientId,
-    int seatId
-) {
-
-    int index = seatId - 1;
-
-    logMessage(
-        workerId,
-        clientId,
-        "checking Seat "
-        + to_string(seatId)
-    );
-
-    if (seats[index] == Constants::AVAILABLE) {
-
-        logMessage(
-            workerId,
-            clientId,
-            "Seat "
-            + to_string(seatId)
-            + " is AVAILABLE"
-        );
-
-        randomDelay();
-
-        seats[index] = clientId;
-
-        logMessage(
-            workerId,
-            clientId,
-            "Seat "
-            + to_string(seatId)
-            + " reserved"
-        );
-
-        return
-            "SUCCESS: Seat "
-            + to_string(seatId)
-            + " reserved";
-    }
-
-    return
-        "FAILED: Seat "
-        + to_string(seatId)
-        + " is already reserved";
-}
-
-string reserveWithSync(
-    int workerId,
-    int clientId,
-    int seatId
-) {
-
-    int index = seatId - 1;
-
-    logMessage(
-        workerId,
-        clientId,
-        "waiting for critical section"
-    );
-
-    lock_guard<mutex> lock(reservationMutex);
-
-    logMessage(
-        workerId,
-        clientId,
-        "entering critical section"
-    );
-
-    if (seats[index] == Constants::AVAILABLE) {
-
-        logMessage(
-            workerId,
-            clientId,
-            "Seat "
-            + to_string(seatId)
-            + " is AVAILABLE"
-        );
-
-        randomDelay();
-
-        seats[index] = clientId;
-
-        logMessage(
-            workerId,
-            clientId,
-            "Seat "
-            + to_string(seatId)
-            + " reserved"
-        );
-
-        logMessage(
-            workerId,
-            clientId,
-            "leaving critical section"
-        );
-
-        return
-            "SUCCESS: Seat "
-            + to_string(seatId)
-            + " reserved";
-    }
-
-    logMessage(
-        workerId,
-        clientId,
-        "Seat "
-        + to_string(seatId)
-        + " is already reserved"
-    );
-
-    logMessage(
-        workerId,
-        clientId,
-        "leaving critical section"
-    );
-
-    return
-        "FAILED: Seat "
-        + to_string(seatId)
-        + " is already reserved";
-}
-
 string reserveSeats(
     int workerId,
     int clientId,
     const vector<int>& requestedSeats
 ) {
+
     if (requestedSeats.empty()) {
-        return "ERROR: No seats specified";
+
+        return
+            "ERROR: No seats specified";
     }
 
-    vector<int> seatIds = requestedSeats;
+    vector<int> seatIds =
+        requestedSeats;
 
-    sort(seatIds.begin(), seatIds.end());
+    sort(
+        seatIds.begin(),
+        seatIds.end()
+    );
 
     seatIds.erase(
-        unique(seatIds.begin(), seatIds.end()),
+        unique(
+            seatIds.begin(),
+            seatIds.end()
+        ),
         seatIds.end()
     );
 
     for (int seatId : seatIds) {
+
         if (!isValidSeat(seatId)) {
-            return "ERROR: Invalid seat " +
-                   to_string(seatId);
+
+            return
+                "ERROR: Invalid seat "
+                + to_string(seatId);
         }
     }
 
@@ -249,14 +188,34 @@ string reserveSeats(
             logMessage(
                 workerId,
                 clientId,
-                "checking Seat " + to_string(seatId)
+                "checking Seat "
+                + to_string(seatId)
             );
 
-            if (seats[index] == Constants::AVAILABLE) {
+            if (
+                seats[index]
+                == Constants::AVAILABLE
+            ) {
+
+                logMessage(
+                    workerId,
+                    clientId,
+                    "Seat "
+                    + to_string(seatId)
+                    + " is AVAILABLE"
+                );
 
                 randomDelay();
 
                 seats[index] = clientId;
+
+                logMessage(
+                    workerId,
+                    clientId,
+                    "Seat "
+                    + to_string(seatId)
+                    + " reserved"
+                );
 
                 result
                     << "SUCCESS: Seat "
@@ -268,7 +227,7 @@ string reserveSeats(
                 result
                     << "FAILED: Seat "
                     << seatId
-                    << " already reserved\n";
+                    << " is already reserved\n";
             }
         }
 
@@ -284,11 +243,19 @@ string reserveSeats(
         logMessage(
             workerId,
             clientId,
-            "locking Seat " + to_string(seatId)
+            "waiting for Seat "
+            + to_string(seatId)
         );
 
         locks.emplace_back(
             seatMutexes[index]
+        );
+
+        logMessage(
+            workerId,
+            clientId,
+            "locked Seat "
+            + to_string(seatId)
         );
     }
 
@@ -298,11 +265,30 @@ string reserveSeats(
 
         int index = seatId - 1;
 
-        if (seats[index] == Constants::AVAILABLE) {
+        if (
+            seats[index]
+            == Constants::AVAILABLE
+        ) {
+
+            logMessage(
+                workerId,
+                clientId,
+                "Seat "
+                + to_string(seatId)
+                + " is AVAILABLE"
+            );
 
             randomDelay();
 
             seats[index] = clientId;
+
+            logMessage(
+                workerId,
+                clientId,
+                "Seat "
+                + to_string(seatId)
+                + " reserved"
+            );
 
             result
                 << "SUCCESS: Seat "
@@ -311,10 +297,18 @@ string reserveSeats(
 
         } else {
 
+            logMessage(
+                workerId,
+                clientId,
+                "Seat "
+                + to_string(seatId)
+                + " is already reserved"
+            );
+
             result
                 << "FAILED: Seat "
                 << seatId
-                << " already reserved\n";
+                << " is already reserved\n";
         }
     }
 
@@ -329,9 +323,13 @@ string cancelWithoutSync(
 
     int index = seatId - 1;
 
-    if (seats[index] == Constants::AVAILABLE) {
+    if (
+        seats[index]
+        == Constants::AVAILABLE
+    ) {
 
-        return "FAILED: Seat is not reserved";
+        return
+            "FAILED: Seat is not reserved";
     }
 
     if (seats[index] != clientId) {
@@ -342,7 +340,8 @@ string cancelWithoutSync(
 
     randomDelay();
 
-    seats[index] = Constants::AVAILABLE;
+    seats[index] =
+        Constants::AVAILABLE;
 
     logMessage(
         workerId,
@@ -363,13 +362,19 @@ string cancelWithSync(
     int seatId
 ) {
 
-    lock_guard<mutex> lock(reservationMutex);
-
     int index = seatId - 1;
 
-    if (seats[index] == Constants::AVAILABLE) {
+    lock_guard<mutex> lock(
+        seatMutexes[index]
+    );
 
-        return "FAILED: Seat is not reserved";
+    if (
+        seats[index]
+        == Constants::AVAILABLE
+    ) {
+
+        return
+            "FAILED: Seat is not reserved";
     }
 
     if (seats[index] != clientId) {
@@ -378,7 +383,8 @@ string cancelWithSync(
             "FAILED: Seat belongs to another client";
     }
 
-    seats[index] = Constants::AVAILABLE;
+    seats[index] =
+        Constants::AVAILABLE;
 
     logMessage(
         workerId,
@@ -400,7 +406,9 @@ string cancelSeat(
 ) {
 
     if (!isValidSeat(seatId)) {
-        return "ERROR: Invalid seat number";
+
+        return
+            "ERROR: Invalid seat number";
     }
 
     if (synchronizationEnabled) {

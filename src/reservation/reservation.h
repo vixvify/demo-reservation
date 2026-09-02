@@ -15,7 +15,7 @@ std::string getSeatStatus(
 std::string reserveSeats(
     int workerId,
     int clientId,
-    const std::vector<int>& seatIds
+    const std::vector<int>& requestedSeats
 );
 
 std::string cancelSeat(
