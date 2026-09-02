@@ -3,12 +3,9 @@
 
 struct Message {
     long mtype;
-
     int clientId;
-
-    char command[64];
-
-    char response[1024];
+    char command[128];
+    char response[2048];
 };
 
 #endif
